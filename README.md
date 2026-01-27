@@ -45,6 +45,3 @@ A full-stack authentication system built using the **MERN stack**, featuring sec
 - Sensitive data handled using environment variables
 
 ---
-
-## 📂 Project Structure
-
