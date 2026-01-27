@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
 const EmailVerify = () => {
-  const { backendUrl, setUserData ,isLoggedin ,userData } = useContext(AppContent);
+  const { backendUrl, setUserData, isLoggedin, userData } = useContext(AppContent);
   const navigate = useNavigate();
   const inputRefs = useRef([]);
 
@@ -32,7 +32,8 @@ const EmailVerify = () => {
 
       const { data } = await axios.post(
         `${backendUrl}/api/auth/verify-account`,
-        { otp }
+        { otp },
+        { withCredentials: true }
       );
 
       if (data.success) {
@@ -54,9 +55,9 @@ const EmailVerify = () => {
     }
   }
 
-  useEffect(() =>{
+  useEffect(() => {
     isLoggedin && userData && userData.isAccountVerified && navigate('/')
-  },[isLoggedin,userData])
+  }, [isLoggedin, userData])
 
 
 
