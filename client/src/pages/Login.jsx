@@ -15,30 +15,42 @@ const Login = () => {
   const { backendUrl, setIsLoggedin, getUserData } = useContext(AppContent);
 
   const onSubmitHandler = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
+
     try {
-      axios.defaults.withCredentials = true;
       if (state === "Sign Up") {
-        const { data } = await axios.post(backendUrl + '/api/auth/register', { name, email, password })
+        const { data } = await axios.post(
+          `${backendUrl}/api/auth/register`,
+          { name, email, password },
+          { withCredentials: true } 
+        );
+
         if (data.success) {
-          setIsLoggedin(true)
-          getUserData()
-          navigate('/')
+          setIsLoggedin(true);
+          await getUserData(); // ensure user data is loaded
+          navigate("/");
         } else {
-          toast.error(data.message)
+          toast.error(data.message);
         }
       } else {
-        const { data } = await axios.post(backendUrl + '/api/auth/login', { email, password })
+        const { data } = await axios.post(
+          `${backendUrl}/api/auth/login`,
+          { email, password },
+          { withCredentials: true } 
+        );
+
         if (data.success) {
-          setIsLoggedin(true)
-          getUserData()
-          navigate('/')
+          setIsLoggedin(true);
+          await getUserData();
+          navigate("/");
         } else {
-          toast.error(data.message)
+          toast.error(data.message);
         }
       }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(
+        error.response?.data?.message || error.message
+      );
     }
   };
 

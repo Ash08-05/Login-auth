@@ -35,7 +35,7 @@ export const AppContextProvider = ({ children }) => {
     try {
       const { data } = await axios.get(
         `${backendUrl}/api/auth/is-auth`,
-        { withCredentials: true } // 🔥 REQUIRED
+        { withCredentials: true } 
       );
 
       if (data.success) {
