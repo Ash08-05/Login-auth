@@ -40,7 +40,8 @@ const EmailVerify = () => {
         toast.success(data.message);
 
         const userRes = await axios.get(
-          `${backendUrl}/api/user/data`
+          `${backendUrl}/api/user/data`,
+          { withCredentials: true }
         );
 
         setUserData(userRes.data.userData);
