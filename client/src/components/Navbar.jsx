@@ -28,19 +28,26 @@ const Navbar = () => {
   }
 
   const sendVerificationOtp = async () => {
-    try {
-      axios.defaults.withCredentials = true;
-      const { data } = await axios.post(backendUrl + '/api/auth/send-verify-otp')
-      if (data.success) {
-        navigate('/email-verify')
-        toast.success(data.message)
-      } else {
-        toast.error(data.message)
-      }
-    } catch (error) {
-      toast.error(error.message)
+  try {
+    const { data } = await axios.post(
+      `${backendUrl}/api/auth/send-verify-otp`,
+      {}, // 🔥 EMPTY BODY REQUIRED
+      { withCredentials: true } // 🔥 REQUIRED
+    );
+
+    if (data.success) {
+      toast.success(data.message);
+      navigate("/email-verify");
+    } else {
+      toast.error(data.message);
     }
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message || error.message
+    );
   }
+};
+
 
   return (
     <nav className="w-full bg-white shadow-md px-6 py-4 flex items-center justify-between">
