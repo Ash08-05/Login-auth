@@ -173,6 +173,7 @@ export const sendVerifyOtp = async (req, res) => {
 
 export const verifyEmail = async (req, res) => {
   try {
+    console.log("VERIFY EMAIL HIT");
     console.log("req.userId:", req.userId);
     console.log("req.body:", req.body);
 
@@ -188,12 +189,17 @@ export const verifyEmail = async (req, res) => {
 
     const user = await userModel.findById(userId);
 
+    console.log("user found:", user ? "YES" : "NO");
+
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
+
+    console.log("verifyOtp:", user.verifyOtp);
+    console.log("verifyOtpExpireAt:", user.verifyOtpExpireAt);
 
     if (!user.verifyOtp || user.verifyOtp !== otp) {
       return res.status(400).json({
@@ -202,7 +208,7 @@ export const verifyEmail = async (req, res) => {
       });
     }
 
-    if (user.verifyOtpExpireAt < Date.now()) {
+    if (!user.verifyOtpExpireAt || user.verifyOtpExpireAt < Date.now()) {
       return res.status(400).json({
         success: false,
         message: "OTP expired",
@@ -211,7 +217,7 @@ export const verifyEmail = async (req, res) => {
 
     user.isAccountVerified = true;
     user.verifyOtp = "";
-    user.verifyOtpExpireAt = null;
+    user.verifyOtpExpireAt = 0;
 
     await user.save();
 
@@ -220,13 +226,14 @@ export const verifyEmail = async (req, res) => {
       message: "Verified successfully",
     });
   } catch (error) {
-    console.error("VERIFY EMAIL ERROR:", error); // 🔥 IMPORTANT
+    console.error("VERIFY EMAIL ERROR:", error); // 🔥 THIS IS KEY
     return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
+
 
 
 export const isAuthenticated = async (req, res) => {
