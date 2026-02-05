@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
 import { EMAIL_VERIFY_TEMPLATE, PASSWORD_RESET_TEMPLATE } from "../config/emailTemplates.js";
+import {resend} from '../config/email.js';
 
 export const register = async (req, res) => {
   try {
@@ -40,7 +41,7 @@ export const register = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: true,
-      sameSite:  "none" ,
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     //to send mail
@@ -143,34 +144,57 @@ export const logout = async (req, res) => {
 
 export const sendVerifyOtp = async (req, res) => {
   try {
-
     const userId = req.userId;
+
     const user = await userModel.findById(userId);
-    if (user.isAccountVerified) {
-      return res.json({ success: false, message: "Account Already verified" })
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
-    const otp = String(Math.floor(100000 + Math.random() * 900000))
+
+    if (user.isAccountVerified) {
+      return res.json({
+        success: false,
+        message: "Already verified",
+      });
+    }
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+
     user.verifyOtp = otp;
-    user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000
+    user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000;
+
     await user.save();
 
-    const mailOption = {
+    // ✅ Send via API (no SMTP)
+    await resend.emails.send({
       from: process.env.SENDER_EMAIL,
       to: user.email,
-      subject: 'Account Verification Otp',
-    
-      html: EMAIL_VERIFY_TEMPLATE.replace("{{otp}}",otp).replace("{{email}}",user.email)
-    }
-    await transporter.sendMail(mailOption);
-    res.json({ success: true, message: 'Verification OTP is sent on Email!' })
+      subject: "Verify Your Email",
+      html: `
+        <h2>Email Verification</h2>
+        <p>Your OTP is:</p>
+        <h1>${otp}</h1>
+      `,
+    });
+
+    return res.json({
+      success: true,
+      message: "OTP sent successfully",
+    });
+
   } catch (error) {
+    console.error("Email Error:", error);
+
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to send email",
     });
   }
-}
-
+};
 export const verifyEmail = async (req, res) => {
   try {
     console.log("VERIFY EMAIL HIT");
@@ -266,7 +290,7 @@ export const sendResetOtp = async (req, res) => {
       to: user.email,
       subject: 'Password Reset Otp',
       // text: `Enter this OTP for Passowrd Reset: ${otp}`
-      html:PASSWORD_RESET_TEMPLATE.replace("{{otp}}",otp).replace("{{email}}",user.email)
+      html: PASSWORD_RESET_TEMPLATE.replace("{{otp}}", otp).replace("{{email}}", user.email)
     }
     await transporter.sendMail(mailOption);
     res.json({ success: true, message: 'Reset OTP is sent on Email!' })
