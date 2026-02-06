@@ -11,6 +11,10 @@ const port = process.env.PORT || 4000;
 
 connectDB();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://login-auth-pied.vercel.app/",
+];
 
 app.use(express.json());
 app.use(cookieParser());
