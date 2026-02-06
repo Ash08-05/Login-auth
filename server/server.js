@@ -34,7 +34,7 @@ app.use(
   })
 );
 
-app.options("/*", cors());
+
 
 // API Endpoint
 app.get("/", (req, res) => res.send("API is Working"));
