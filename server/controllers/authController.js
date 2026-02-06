@@ -154,52 +154,109 @@ export const logout = async (req, res) => {
 // ================= SEND VERIFY OTP =================
 export const sendVerifyOtp = async (req, res) => {
   try {
-    const userId = req.userId;
-
-    const user = await userModel.findById(userId);
-
-    // ✅ FIXED
-    if (!user) {
-      return res.json({ success: false, message: "User not found" });
-    }
-
-    if (user.isAccountVerified) {
-      return res.json({
+    // 1. Validate userId
+    if (!req.userId) {
+      return res.status(401).json({
         success: false,
-        message: "Account Already verified",
+        message: "Unauthorized: User ID missing",
       });
     }
 
+    // 2. Find user
+    let user;
+    try {
+      user = await userModel.findById(req.userId);
+    } catch (dbError) {
+      console.error("❌ Database Find Error:", dbError);
+
+      return res.status(500).json({
+        success: false,
+        message: "Database error while fetching user",
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // 3. Check verification status
+    if (user.isAccountVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Account already verified",
+      });
+    }
+
+    // 4. Generate OTP
     const otp = String(Math.floor(100000 + Math.random() * 900000));
 
     user.verifyOtp = otp;
     user.verifyOtpExpireAt = Date.now() + 24 * 60 * 60 * 1000;
 
-    await user.save();
+    // 5. Save user
+    try {
+      await user.save();
+    } catch (saveError) {
+      console.error("❌ Database Save Error:", saveError);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to save OTP",
+      });
+    }
+
+    // 6. Prepare email
+    if (!process.env.SENDER_EMAIL) {
+      console.error("❌ Missing SENDER_EMAIL env");
+
+      return res.status(500).json({
+        success: false,
+        message: "Email service not configured",
+      });
+    }
 
     const mailOption = {
       from: process.env.SENDER_EMAIL,
       to: user.email,
-      subject: "Account Verification Otp",
+      subject: "Account Verification OTP",
       html: EMAIL_VERIFY_TEMPLATE
         .replace("{{otp}}", otp)
         .replace("{{email}}", user.email),
     };
 
-    await transporter.sendMail(mailOption);
+    // 7. Send mail
+    try {
+      await transporter.sendMail(mailOption);
+    } catch (mailError) {
+      console.error("❌ Email Send Error:", mailError);
 
-    return res.json({
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send verification email",
+      });
+    }
+
+    // 8. Success
+    return res.status(200).json({
       success: true,
-      message: "Verification OTP is sent on Email!",
+      message: "Verification OTP sent successfully",
     });
 
   } catch (error) {
-    return res.json({
+    // 9. Fallback error handler
+    console.error("🔥 Unexpected Server Error:", error);
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
+
 
 // ================= VERIFY EMAIL =================
 export const verifyEmail = async (req, res) => {
