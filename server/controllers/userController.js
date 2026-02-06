@@ -2,7 +2,7 @@ import userModel from "../models/userModel.js";
 
 export const getUserData = async (req, res) => {
   try {
-    const userId = req.userId; // 🔥 correct source
+    const userId = req.userId; 
 
     if (!userId) {
       return res.status(401).json({

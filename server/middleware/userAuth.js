@@ -19,8 +19,6 @@ const userAuth = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // ✅ SAFE: req exists
     req.userId = decoded.id;
 
     next(); // 🚨 REQUIRED

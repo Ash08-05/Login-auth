@@ -11,29 +11,16 @@ const port = process.env.PORT || 4000;
 
 connectDB();
 
-const allowedOrigins = [
-  "https://login-auth-xi.vercel.app",
-];
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (Postman, server-to-server)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: true,
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 
 // Handle preflight requests
 
